@@ -67,18 +67,18 @@ module.exports = function (express, db) {
         const user = {
           name: req.body.name,
           surname: req.body.surname,
-          oib: req.body.oib,
+          // oib: req.body.oib,
           email: req.body.email,
-          password: hash,
+          // password: hash,
           level: req.body.level,
         };
 
+
         db.collection('users').updateOne(
-          { _id: new ObjectId(req.body.id) },
+          { _id: new ObjectId(req.decoded._id) },
           { $set: user },
           (error, data) => {
-            if (!error) return res.status(200).json({ changedRows: data.modifiedCount });
-
+            if (!error) return res.status(200).json({ user: user});
             return res.status(500).json({ message: 'An error occurred' });
           },
         );
