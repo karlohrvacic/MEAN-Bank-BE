@@ -48,6 +48,7 @@ module.exports = function (express, db) {
         accountId: req.body.accountId,
         currency: req.body.currency,
         amount: Number(req.body.amount) * Number(exchangeRate),
+        timestamp: Date.now(),
       };
       if (row.balance - payout.amount >= 0){
         db.collection('payouts').insertOne(payout, (err, data) => {

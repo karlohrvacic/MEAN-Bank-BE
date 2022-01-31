@@ -25,6 +25,8 @@ module.exports = function (express, db) {
         accountId: req.body.accountId,
         currency: row.currency,
         amount: Number(Number(req.body.amount).toFixed(2)),
+        timestamp: Date.now(),
+
       };
 
       db.collection('payments').insertOne(payment, (err, data) => {
