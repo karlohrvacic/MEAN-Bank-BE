@@ -97,7 +97,7 @@ module.exports = function (express, db, crypto) {
         db.collection('accounts').find({
           ownerId: req.decoded._id,
         }).toArray((err, rows) => {
-          if (!err) return res.status(200).json({ accounts: rows, you: req.decoded });
+          if (!err) return res.status(200).json({ accounts: rows });
 
           return res.status(500).json({ message: 'An error occurred ' });
         });
