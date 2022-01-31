@@ -94,11 +94,10 @@ module.exports = function (express, db, crypto) {
 
   accountsRouter.route('/my').get((req, res) => {
       try {
-        console.log(req.decoded._id,)
         db.collection('accounts').find({
           ownerId: req.decoded._id,
         }).toArray((err, rows) => {
-          if (!err) return res.status(200).json({ accounts: rows });
+          if (!err) return res.status(200).json({ accounts: rows, you: req.decoded });
 
           return res.status(500).json({ message: 'An error occurred ' });
         });
