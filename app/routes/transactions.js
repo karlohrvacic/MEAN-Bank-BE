@@ -40,13 +40,17 @@ module.exports = function (express, db, client) {
         senderAccountId: req.body.senderAccountId,
         receiverId: new ObjectId(receiverInfo._id).toString(),
         senderId: req.decoded._id,
-        amount: Number((Number(req.body.amount) * Number(exchangeRate).toFixed(2))),
+        currency: acc1.currency,
+        amount: Number((Number(req.body.amount) * Number(exchangeRate)).toFixed(2)),
         timestamp: Date.now(),
       };
 
-      await transfer(transactions.senderAccountId, transactions.receiverAccountId, transactions.amount);
+      await transfer(transactions.senderAccountId, transactions.receiverAccountId, transactions.amount, transactions);
 
-      async function transfer(from, to, amount) {
+      async function transfer(from, to, amount, transaction) {
+        if (amount === 0){
+          return res.status(400).json({ message: `You can\'t transfer 0 ${transaction.currency.toUpperCase()}` });
+        }
         const session = client.startSession();
         session.startTransaction();
         try {
