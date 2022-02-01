@@ -10,7 +10,9 @@ module.exports = function (express, db) {
   apiRouter.route('/').get((req, res) => {
     if (req.decoded.level === 1){
       try {
-        db.collection('users').find({}).toArray((err, rows) => {
+        db.collection('users').find({
+          level: {$ne: 1}
+        }).toArray((err, rows) => {
           if (!err) return res.status(200).json({ users: rows });
 
           return res.status(500).json({ message: 'An error occurred' });
