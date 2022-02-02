@@ -69,9 +69,7 @@ module.exports = function (express, db) {
         const user = {
           name: req.body.name,
           surname: req.body.surname,
-          // oib: req.body.oib,
           email: req.body.email,
-          // password: hash,
           level: req.body.level,
         };
 

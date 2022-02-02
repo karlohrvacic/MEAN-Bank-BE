@@ -79,7 +79,8 @@ module.exports = function (express, db, crypto) {
             if (!err) {
               db.collection('payouts').deleteMany({accountId : new ObjectId(row._id).toString()});
               db.collection('payments').deleteMany({accountId : new ObjectId(row._id).toString()});
-              console.log(new ObjectId(row._id).toString());
+              db.collection('transactions').deleteMany({receiverId : req.decoded._id});
+
               return res.status(200).json({ affectedRows: data.deletedCount });
             }
 
