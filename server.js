@@ -22,6 +22,7 @@ const init = async () => {
 };
 
 let initServer = (database, client) => {
+
   app.use(express.static(`${__dirname}/public/app`));
 
   app.use((req, res, next) => {
