@@ -11,16 +11,16 @@ module.exports = function (express, db) {
       db.collection('payments').find({}).toArray((err, rows) => {
         if (!err) res.status(200).json({ payments: rows });
 
-        else res.status(500).json({message: 'An error occurred '});
+        else res.status(500).json({ message: 'An error occurred ' });
       });
     } catch (e) {
       res.status(500).json({ message: 'An error occurred' });
     }
   }).post(async (req, res) => {
     try {
-      let row = await db.collection('accounts').findOne({ _id: new ObjectId(req.body.accountId) });
+      const row = await db.collection('accounts').findOne({ _id: new ObjectId(req.body.accountId) });
 
-      let payment = {
+      const payment = {
         ownerId: req.decoded._id,
         accountId: req.body.accountId,
         currency: row.currency,
@@ -39,11 +39,11 @@ module.exports = function (express, db) {
               },
             },
             (error) => {
-              if (error) return res.status(500).json({message: 'An error occurred ' + error});
+              if (error) return res.status(500).json({ message: `An error occurred ${error}` });
             },
           );
-          payment['_id'] = data.insertedId
-          return res.status(200).json({ payment: payment });
+          payment._id = data.insertedId;
+          return res.status(200).json({ payment });
         } return res.status(500).json({ message: 'An error occurred' });
       });
     } catch (e) {
@@ -53,17 +53,16 @@ module.exports = function (express, db) {
 
   paymentsRouter.route('/my').get(async (req, res) => {
     try {
-      console.log(req.decoded._id)
       db.collection('payments').find({
-        ownerId: req.decoded._id
+        ownerId: req.decoded._id,
       }).toArray((err, rows) => {
-        if (!err) res.status(200).json({payments: rows});
-        else res.status(500).json({message: 'An error occurred '});
+        if (!err) res.status(200).json({ payments: rows });
+        else res.status(500).json({ message: 'An error occurred ' });
       });
     } catch (e) {
-      res.status(500).json({message: 'An error occurred ' + e});
+      res.status(500).json({ message: `An error occurred ${e}` });
     }
-  })
+  });
 
   return paymentsRouter;
 };

@@ -8,10 +8,10 @@ module.exports = function (express, db) {
   apiRouter.use(tokenValidation);
 
   apiRouter.route('/').get((req, res) => {
-    if (req.decoded.level === 1){
+    if (req.decoded.level === 1) {
       try {
         db.collection('users').find({
-          level: {$ne: 1}
+          level: { $ne: 1 },
         }).toArray((err, rows) => {
           if (!err) return res.status(200).json({ users: rows });
 
@@ -23,7 +23,6 @@ module.exports = function (express, db) {
     } else {
       return res.status(401).json({ message: 'No required permissions' });
     }
-
   }).post(async (req, res) => {
     if (req.decoded.level > req.body.level) {
       try {
@@ -49,10 +48,8 @@ module.exports = function (express, db) {
             level: req.body.level,
           };
 
-          db.collection('users').insertOne(user, (err, data) => {
-            console.log(data);
-
-            if (!err) return res.status(200).json({ insertId: data.insertedId });
+          db.collection('users').insertOne(user, (error, data) => {
+            if (!error) return res.status(200).json({ insertId: data.insertedId });
 
             return res.status(500).json({ message: 'An error occurred' });
           });
@@ -65,24 +62,21 @@ module.exports = function (express, db) {
     }
   }).put((req, res) => {
     try {
-      require('bcrypt-nodejs').hash(req.body.password, null, null, (err, hash) => {
-        const user = {
-          name: req.body.name,
-          surname: req.body.surname,
-          email: req.body.email,
-          level: req.body.level,
-        };
+      const user = {
+        name: req.body.name,
+        surname: req.body.surname,
+        email: req.body.email,
+        level: req.body.level,
+      };
 
-
-        db.collection('users').updateOne(
-          { _id: new ObjectId(req.decoded._id) },
-          { $set: user },
-          (error, data) => {
-            if (!error) return res.status(200).json({ user: user});
-            return res.status(500).json({ message: 'An error occurred' });
-          },
-        );
-      });
+      db.collection('users').updateOne(
+        { _id: new ObjectId(req.decoded._id) },
+        { $set: user },
+        (error) => {
+          if (!error) return res.status(200).json({ user });
+          return res.status(500).json({ message: 'An error occurred' });
+        },
+      );
     } catch (e) {
       return res.status(500).json({ message: 'An error occurred' });
     }

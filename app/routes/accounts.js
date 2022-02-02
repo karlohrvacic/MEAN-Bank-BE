@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const tokenValidation = require("../../functions/tokenValidation");
+const tokenValidation = require('../../functions/tokenValidation');
 
 module.exports = function (express, db, crypto) {
   const IBAN_LENGTH = 19;
@@ -8,7 +8,7 @@ module.exports = function (express, db, crypto) {
   accountsRouter.use(tokenValidation);
 
   accountsRouter.route('/').get((req, res) => {
-    if (req.decoded.level === 1){
+    if (req.decoded.level === 1) {
       try {
         db.collection('accounts').find({}).toArray((err, rows) => {
           if (!err) return res.status(200).json({ accounts: rows });
@@ -29,7 +29,7 @@ module.exports = function (express, db, crypto) {
         return res.status(409).json({ message: `Account holder already has account for ${req.body.currency.toUpperCase()}` });
       }
 
-      let account = {
+      const account = {
         ownerId: req.decoded._id,
         accountNumber: `HR${randomNumbers(IBAN_LENGTH)}`,
         currency: req.body.currency,
@@ -37,10 +37,10 @@ module.exports = function (express, db, crypto) {
       };
 
       db.collection('accounts').insertOne(account, (err, data) => {
-        if (!err){
-          account['_id'] = data.insertedId
-          return res.status(200).json({ account: account });
-        } 
+        if (!err) {
+          account._id = data.insertedId;
+          return res.status(200).json({ account });
+        }
 
         return res.status(500).json({ message: 'An error occurred' });
       });
@@ -70,65 +70,62 @@ module.exports = function (express, db, crypto) {
   accountsRouter.route('/:id').delete(async (req, res) => {
     try {
       const row = await db.collection('accounts').findOne({ ownerId: req.decoded._id, _id: new ObjectId(req.params.id) });
-      if (req.decoded.level === 1 || row && row.balance === 0) {
-        const row = await db.collection('accounts').findOne({ _id: new ObjectId(req.params.id) });
+      if (req.decoded.level === 1 || (row && row.balance === 0)) {
+        const account = await db.collection('accounts').findOne({ _id: new ObjectId(req.params.id) });
 
-          db.collection('accounts').deleteOne({
-            _id: new ObjectId(req.params.id),
-          }, (err, data) => {
-            if (!err) {
-              db.collection('payouts').deleteMany({accountId : new ObjectId(row._id).toString()});
-              db.collection('payments').deleteMany({accountId : new ObjectId(row._id).toString()});
-              db.collection('transactions').deleteMany({receiverId : req.decoded._id});
+        db.collection('accounts').deleteOne({
+          _id: new ObjectId(req.params.id),
+        }, (err, data) => {
+          if (!err) {
+            db.collection('payouts').deleteMany({ accountId: new ObjectId(account._id).toString() });
+            db.collection('payments').deleteMany({ accountId: new ObjectId(account._id).toString() });
+            db.collection('transactions').deleteMany({ receiverId: req.decoded._id });
 
-              return res.status(200).json({ affectedRows: data.deletedCount });
-            }
+            return res.status(200).json({ affectedRows: data.deletedCount });
+          }
 
-            return res.status(500).json({ message: 'An error occurred' });
-          });
-
-        }
-       else {
+          return res.status(500).json({ message: 'An error occurred' });
+        });
+      } else {
         return res.status(403).json({ message: 'Illegal action!\nUser has no privileges.\nAction has been reported!' });
       }
     } catch (e) {
-      return res.status(500).json({ message: 'An error occurred ' + e });
+      return res.status(500).json({ message: `An error occurred ${e}` });
     }
   });
 
   accountsRouter.route('/my').get((req, res) => {
-      try {
-        db.collection('accounts').find({
-          ownerId: req.decoded._id,
-        }).toArray((err, rows) => {
-          if (!err) return res.status(200).json({ accounts: rows });
+    try {
+      db.collection('accounts').find({
+        ownerId: req.decoded._id,
+      }).toArray((err, rows) => {
+        if (!err) return res.status(200).json({ accounts: rows });
 
-          return res.status(500).json({ message: 'An error occurred ' });
-        });
-      } catch (e) {
-        return res.status(500).json({ message: 'An error occurred ' + e });
-      }
+        return res.status(500).json({ message: 'An error occurred ' });
+      });
+    } catch (e) {
+      return res.status(500).json({ message: `An error occurred ${e}` });
+    }
   });
 
   accountsRouter.route('/numbers').get((req, res) => {
-      try {
-        db.collection('accounts').find({
-          ownerId: {$ne: req.decoded._id}
-        }).toArray((err, rows) => {
-
-          if (!err && rows){
-            for (let row of rows) {
-              delete row.balance;
-            }
-            return res.status(200).json({ accounts: rows });
+    try {
+      db.collection('accounts').find({
+        ownerId: { $ne: req.decoded._id },
+      }).toArray((err, rows) => {
+        if (!err && rows) {
+          for (const row of rows) {
+            delete row.balance;
           }
+          return res.status(200).json({ accounts: rows });
+        }
 
-          return res.status(550).json({ message: 'No other accounts' });
-        });
-      } catch (e) {
-        return res.status(500).json({ message: 'An error occurred' });
-      }
-  })
+        return res.status(550).json({ message: 'No other accounts' });
+      });
+    } catch (e) {
+      return res.status(500).json({ message: 'An error occurred' });
+    }
+  });
 
   function randomNumbers(len) {
     let string = '';

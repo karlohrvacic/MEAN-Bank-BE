@@ -31,26 +31,22 @@ module.exports = function (express, db) {
       let exchangeRate = 1;
 
       if (!isSameCurrency) {
-        exchangeRate = await getExchangeRate(row.currency, req.body.currency).then(result => {
-          return result.json()
-        }).then(result => {
-          return result[row.currency]
-        });
+        exchangeRate = await getExchangeRate(row.currency, req.body.currency)
+          .then((result) => result.json())
+          .then((result) => result[row.currency]);
       }
-
-      console.log(exchangeRate)
 
       if (Number(row.balance) < Number(req.body.balance) * Number(exchangeRate)) {
         return res.status(400).json({ message: `Not enough balance for transaction, total with exchange rate is ${Number(req.body.balance) * Number(exchangeRate)}` });
       }
-      let payout = {
+      const payout = {
         ownerId: req.decoded._id,
         accountId: req.body.accountId,
         currency: req.body.currency,
         amount: Number(req.body.amount) * Number(exchangeRate),
         timestamp: Date.now(),
       };
-      if (row.balance - payout.amount >= 0){
+      if (row.balance - payout.amount >= 0) {
         db.collection('payouts').insertOne(payout, (err, data) => {
           if (!err) {
             db.collection('accounts').updateOne(
@@ -61,33 +57,32 @@ module.exports = function (express, db) {
                 },
               },
               (error) => {
-                if (error) return res.status(500).json({ message: 'An error occurred '  + error});
+                if (error) return res.status(500).json({ message: `An error occurred ${error}` });
               },
             );
-            payout['_id'] = data.insertedId;
+            payout._id = data.insertedId;
 
-            return res.status(200).json({ payout: payout });
-          } return res.status(500).json({ message: 'An error occurred '});
+            return res.status(200).json({ payout });
+          } return res.status(500).json({ message: 'An error occurred ' });
         });
-      } else{
+      } else {
         return res.status(400).json({ message: 'Low balance' });
       }
-
     } catch (e) {
-      return res.status(500).json({ message: 'An error occurred '  + e});
+      return res.status(500).json({ message: `An error occurred ${e}` });
     }
   });
 
   payoutsRouter.route('/my').get(async (req, res) => {
     try {
       db.collection('payouts').find({
-        ownerId: req.decoded._id
+        ownerId: req.decoded._id,
       }).toArray((err, rows) => {
-        if (!err) res.status(200).json({payouts: rows});
-        else res.status(500).json({message: 'An error occurred '});
+        if (!err) res.status(200).json({ payouts: rows });
+        else res.status(500).json({ message: 'An error occurred ' });
       });
     } catch (e) {
-      res.status(500).json({message: 'An error occurred '});
+      res.status(500).json({ message: 'An error occurred ' });
     }
   });
   return payoutsRouter;

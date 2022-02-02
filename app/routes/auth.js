@@ -4,7 +4,6 @@ module.exports = function (express, db, jwt, secret, bcrypt) {
 
   authRouter.post('/login', async (req, res) => {
     try {
-      console.log(req.body)
       const rows = await db.collection('users').find({
         email: req.body.email,
       }).toArray();
@@ -21,19 +20,25 @@ module.exports = function (express, db, jwt, secret, bcrypt) {
           level: rows[0].level,
           name: rows[0].name,
           surname: rows[0].surname,
-          oib: rows[0].oib
+          oib: rows[0].oib,
         }, secret, {
           expiresIn: '7d',
         });
 
         return res.status(200).json({
           token,
-          user: { _id: rows[0]._id, email: rows[0].email, name: rows[0].name, surname: rows[0].surname, level: rows[0].level, oib: rows[0].oib},
+          user: {
+            _id: rows[0]._id,
+            email: rows[0].email,
+            name: rows[0].name,
+            surname: rows[0].surname,
+            level: rows[0].level,
+            oib: rows[0].oib,
+          },
         });
       }
       return res.status(401).json({ message: 'Wrong password' });
     } catch (e) {
-      console.log(e)
       res.status(500).json({ message: `An error occurred!${e}` });
     }
   });
@@ -41,10 +46,11 @@ module.exports = function (express, db, jwt, secret, bcrypt) {
   authRouter.route('/register').post(async (req, res) => {
     try {
       const rows = await db.collection('users').find({
-        $or : [
-          {'email': req.body.email},
-          {'oib': req.body.oib}
-        ]}).toArray();
+        $or: [
+          { email: req.body.email },
+          { oib: req.body.oib },
+        ],
+      }).toArray();
 
       if (req.body.password.length < MIN_PASS_LENGTH) {
         return res.status(400).json({ message: `Password too short! Minimal password length is ${MIN_PASS_LENGTH}` });
@@ -65,8 +71,6 @@ module.exports = function (express, db, jwt, secret, bcrypt) {
         };
 
         db.collection('users').insertOne(user, (error, data) => {
-          console.log(data);
-
           if (!error) return res.status(200).json({ insertId: data.insertedId });
 
           return res.status(500).json({ message: 'An error occurred' });

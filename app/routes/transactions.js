@@ -26,16 +26,14 @@ module.exports = function (express, db, client) {
       let exchangeRate = 1;
 
       if (acc1.currency !== acc2.currency) {
-        exchangeRate = await getExchangeRate(acc1.currency, acc2.currency).then(result => {
-          return result.json()
-        }).then(result => {
-          return result[acc1.currency]
-        });
+        exchangeRate = await getExchangeRate(acc1.currency, acc2.currency)
+          .then((result) => result.json())
+          .then((result) => result[acc1.currency]);
       }
 
-      req.body.amount = Number(req.body.amount.toFixed(2))
+      req.body.amount = Number(req.body.amount.toFixed(2));
 
-      let transactions = {
+      const transactions = {
         receiverAccountId: req.body.receiverAccountId,
         senderAccountId: req.body.senderAccountId,
         receiverId: new ObjectId(receiverInfo._id).toString(),
@@ -48,50 +46,53 @@ module.exports = function (express, db, client) {
       await transfer(transactions.senderAccountId, transactions.receiverAccountId, transactions.amount, transactions);
 
       async function transfer(from, to, amount, transaction) {
-        if (amount === 0){
-          return res.status(400).json({ message: `You can\'t transfer 0 ${transaction.currency.toUpperCase()}` });
+        if (amount === 0) {
+          return res.status(400).json({ message: `You can't transfer 0 ${transaction.currency.toUpperCase()}` });
         }
         const session = client.startSession();
         session.startTransaction();
         try {
           const opts = { session, returnOriginal: false };
-          const A = await db.collection('accounts').findOneAndUpdate({ _id: new ObjectId(from) }, { $inc: { balance: -req.body.amount } }, opts).then((res) => res.value);
+          const A = await db.collection('accounts').findOneAndUpdate({ _id: new ObjectId(from) }, { $inc: { balance: -req.body.amount } }, opts)
+            .then((result) => result.value);
+
           if (A.balance < Number(req.body.amount)) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({ message: 'Insufficient funds' });
           }
-          await db.collection('accounts').findOneAndUpdate({ _id: new ObjectId(to) }, { $inc: { balance: amount } }, opts).then((res) => res.value);
+          await db.collection('accounts').findOneAndUpdate({ _id: new ObjectId(to) }, { $inc: { balance: amount } }, opts).then((result) => result.value);
 
           await session.commitTransaction();
           session.endSession();
           db.collection('transactions').insertOne(transactions, (err, data) => {
             if (!err) {
-              transactions['_id'] = data.insertedId
+              transactions._id = data.insertedId;
               return res.status(200).json({ transaction: transactions });
             } return res.status(500).json({ message: 'An error occurred' });
           });
         } catch (error) {
-            return res.status(500).json({ message: 'An error occurred ' + error});
+          return res.status(500).json({ message: `An error occurred ${error}` });
         }
       }
     } catch (e) {
-        return res.status(500).json({ message: 'An error occurred ' + e});
+      return res.status(500).json({ message: `An error occurred ${e}` });
     }
   });
 
   transactionRouter.route('/my').get(async (req, res) => {
     try {
       db.collection('transactions').find({
-        $or : [
-        {receiverId: req.decoded._id},
-        {senderId: req.decoded._id}
-      ]}).toArray((err, rows) => {
-        if (!err) res.status(200).json({transactions: rows});
-        else res.status(500).json({message: 'An error occurred '});
+        $or: [
+          { receiverId: req.decoded._id },
+          { senderId: req.decoded._id },
+        ],
+      }).toArray((err, rows) => {
+        if (!err) res.status(200).json({ transactions: rows });
+        else res.status(500).json({ message: 'An error occurred ' });
       });
     } catch (e) {
-      res.status(500).json({message: 'An error occurred '});
+      res.status(500).json({ message: 'An error occurred ' });
     }
   });
 

@@ -7,7 +7,7 @@ module.exports = function (express) {
 
   meRouter.get('/', (req, res) => {
     try {
-      return res.status(200).json({user: req.decoded});
+      return res.status(200).json({ user: req.decoded });
     } catch (e) {
       return res.status(500).json({ message: 'An error occurred' });
     }
