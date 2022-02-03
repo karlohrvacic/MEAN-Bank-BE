@@ -16,6 +16,8 @@ MIT
 @angular/router
 MIT
 
+ng2-currency-mask
+
 ngx-toastr
 MIT
 The MIT License (MIT)

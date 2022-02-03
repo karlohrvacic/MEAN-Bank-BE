@@ -51,7 +51,6 @@ module.exports = function (express, db, client) {
         }
         const session = client.startSession();
         session.startTransaction();
-        try {
           const opts = { session, returnOriginal: false };
           const A = await db.collection('accounts').findOneAndUpdate({ _id: new ObjectId(from) }, { $inc: { balance: -req.body.amount } }, opts)
             .then((result) => result.value);
@@ -71,9 +70,6 @@ module.exports = function (express, db, client) {
               return res.status(200).json({ transaction: transactions });
             } return res.status(500).json({ message: 'An error occurred' });
           });
-        } catch (error) {
-          return res.status(500).json({ message: `An error occurred ${error}` });
-        }
       }
     } catch (e) {
       return res.status(500).json({ message: `An error occurred ${e}` });

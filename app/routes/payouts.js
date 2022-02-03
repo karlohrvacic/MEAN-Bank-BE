@@ -62,7 +62,7 @@ module.exports = function (express, db) {
             );
             payout._id = data.insertedId;
 
-            return res.status(200).json({ payout });
+            return res.status(200).json({ payout: payout });
           } return res.status(500).json({ message: 'An error occurred ' });
         });
       } else {

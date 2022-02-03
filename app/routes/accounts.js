@@ -19,14 +19,14 @@ module.exports = function (express, db, crypto) {
         return res.status(500).json({ message: 'An error occurred' });
       }
     } else {
-      return res.status(401).json({ message: 'No required permissions' });
+      return res.status(401).json({ message: "You don't have required permissions" });
     }
   }).post(async (req, res) => {
     try {
       const row = await db.collection('accounts').findOne({ ownerId: req.decoded._id, currency: req.body.currency });
 
       if (row) {
-        return res.status(409).json({ message: `Account holder already has account for ${req.body.currency.toUpperCase()}` });
+        return res.status(409).json({ message: `You already have an account for ${req.body.currency.toUpperCase()}` });
       }
 
       const account = {
