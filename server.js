@@ -59,7 +59,7 @@ let initServer = (database, client) => {
   app.use('/api/v1/currencies', currenciesRouter);
 
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '/public/app/views/index.html'));
+    res.sendFile(path.join(__dirname, '/public/app/index.html'));
   });
 
   app.listen(config.port);
